@@ -8,6 +8,25 @@ The primary purpose of this tool is to transform raw campaign spending data into
 2.  **Column-wise Distribution**: The market share of each campaign within a specific channel (e.g., channel1).
 3.  **Seasonal Trends**: Visualizes budget allocations tailored for Summer peaks (`ads1`), Holiday peaks (`ads2`), and Always-on strategies (`ads3`).
 
+## 📊 Current Analysis Preview (Illustration)
+
+Below is a snapshot of the latest generated distribution matrices:
+
+### Matrix A: Ad Strategy (Row-wise)
+| Campaign | Channel 1 | Channel 2 | Channel 3 |
+| :--- | :--- | :--- | :--- |
+| **ads1** | 10.0% | 10.0% | 80.0% |
+| **ads2** | 20.0% | 15.0% | 65.0% |
+| **ads3** | 5.0% | 60.0% | 35.0% |
+
+### Matrix B: Column-wise Share
+| Campaign | Channel 1 | Channel 2 | Channel 3 |
+| :--- | :--- | :--- | :--- |
+| **ads1** | 25.81% | 19.21% | 44.38% |
+| **ads2** | 69.49% | 38.79% | 48.54% |
+| **ads3** | 4.7% | 42.0% | 7.08% |
+
+---
 ## ⚙️ Standard Workflow
 Follow these steps to maintain and update your spending insights:
 
