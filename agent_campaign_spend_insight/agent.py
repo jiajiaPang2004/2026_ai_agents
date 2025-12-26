@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 # The API key and platform settings are now loaded from the .env file automatically.
-
+# hidden API key
 # Attempt to import SessionService from possible locations
 try:
     from google.adk.services.session_service import SessionService
