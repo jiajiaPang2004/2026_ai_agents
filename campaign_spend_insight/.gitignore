@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.env
+
+# Data & Reports
+campaign_spend.csv
+distribution_report.html
+
+# IDEs
+.vscode/
+.idea/
