@@ -1,23 +1,15 @@
 import asyncio
+import os
+import sys
+import time
+from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.runners import Runner
-from tools import get_campaign_data, get_distribution_matrices
-import os
-from dotenv import load_dotenv
+from google.adk.sessions import InMemorySessionService
+from google.genai import types as genai_types
+from .tools import get_distribution_matrices_data
 
 load_dotenv()
-# The API key and platform settings are now loaded from the .env file automatically.
-# hidden API key
-# Attempt to import SessionService from possible locations
-try:
-    from google.adk.services.session_service import SessionService
-except ImportError:
-    try:
-        from google.adk.session_service import SessionService
-    except ImportError:
-        # Fallback/Mock if absolutely necessary, but usually it's in one of the above
-        class SessionService:
-            pass
 
 # Define the agent
 campaign_insight_agent = Agent(
@@ -25,32 +17,72 @@ campaign_insight_agent = Agent(
     model="gemini-2.0-flash",
     instruction=(
         "You are a marketing analyst providing insights into campaign spend distribution. "
-        "Use the 'get_distribution_matrices' tool to fetch the 2D spending matrices (row-wise and column-wise %). "
-        "Analyze these matrices and present the following to the user: "
-        "1. A markdown table for the Row-wise Distribution (Ads across Channels), summarizing where each ad allocates its budget. "
-        "2. A markdown table for the Column-wise Distribution (Campaigns within Channels), summarizing the competition within each channel. "
-        "3. A brief interpretation of the key findings, such as which channel is dominated by which ad, or which ad is most diversified."
+        "Use the 'get_distribution_matrices_data' tool to fetch the 2D spending matrices. "
+        "Analyze these matrices and present a clear breakdown to the user."
     ),
-    tools=[get_distribution_matrices]
+    tools=[get_distribution_matrices_data]
 )
 
-async def main():
-    # Attempt Runner initialization with common patterns
-    try:
-        session_service = SessionService()
-        runner = Runner(agent=campaign_insight_agent, session_service=session_service)
-    except Exception:
-        # Some versions might use different keyword arguments
+async def run_analysis():
+    print("Initializing Agent Runner...")
+    session_service = InMemorySessionService()
+    app_name = "campaign_analytics"
+    user_id = "default_user"
+    session_id = "default_session"
+    
+    await session_service.create_session(
+        app_name=app_name, 
+        user_id=user_id, 
+        session_id=session_id
+    )
+    
+    runner = Runner(
+        agent=campaign_insight_agent, 
+        app_name=app_name, 
+        session_service=session_service
+    )
+    
+    query = "Provide the 2D spending distribution analysis from my data."
+    
+    max_retries = 3
+    retry_delay = 40 # Seconds (matching the ~36s requested by the API error)
+    
+    for attempt in range(max_retries):
+        print(f"Running Analysis (Attempt {attempt + 1}/{max_retries})...")
         try:
-             runner = Runner(root_agent=campaign_insight_agent)
-        except Exception:
-             # Last resort, let adk handles it via CLI if this fails
-             print("Error initializing Runner programmatically. Try running via: adk run")
-             return
+            async for event in runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=genai_types.Content(
+                    role="user", 
+                    parts=[genai_types.Part.from_text(text=query)]
+                ),
+            ):
+                if event.is_final_response():
+                    print("\n--- AGENT ANALYSIS ---\n")
+                    print(event.content.parts[0].text)
+                    return True
+        except Exception as e:
+            err_msg = str(e)
+            if "429" in err_msg or "ResourceExhausted" in err_msg:
+                if attempt < max_retries - 1:
+                    print(f"\n[!] Rate limit hit. Waiting {retry_delay} seconds for API quota reset...")
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    print("\n[!] Rate limit persistent. Please try again in a few minutes.")
+            else:
+                print(f"\n[!] An fatal error occurred: {e}")
+            return False
+    return False
 
-    result = await runner.run_async("Provide the 2D spending distribution analysis.")
-    print("\n--- AGENT ANALYSIS ---\n")
-    print(result.text)
+def main():
+    try:
+        asyncio.run(run_analysis())
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user.")
+    except Exception:
+        pass
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
