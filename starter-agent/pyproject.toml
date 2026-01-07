@@ -1,5 +1,5 @@
 [project]
-name = "ai"
+name = "starter-agent"
 version = "0.1.0"
 description = ""
 authors = [
@@ -12,7 +12,6 @@ dependencies = [
     "google-cloud-logging>=3.12.0,<4.0.0",
     "google-cloud-aiplatform[evaluation,agent-engines]>=1.118.0,<2.0.0",
     "protobuf>=6.31.1,<7.0.0",
-    "google-genai>=1.56.0",
 ]
 requires-python = ">=3.10,<3.14"
 
@@ -54,7 +53,7 @@ select = [
 ignore = ["E501", "C901", "B006"] # ignore line too long, too complex
 
 [tool.ruff.lint.isort]
-known-first-party = ["ai2026", "frontend"]
+known-first-party = ["app", "frontend"]
 
 [tool.mypy]
 disallow_untyped_calls = true
@@ -89,30 +88,25 @@ pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ai2026","frontend"]
+packages = ["app","frontend"]
 
 [tool.agent-starter-pack]
 # Generation metadata - enables CLI commands to understand project context
 # These fields allow any generated project to work as a remote template
-name = "ai"
-description = ""
-base_template = "local_ai"
-agent_directory = "ai2026"
+name = "starter-agent"
+description = "A base ReAct agent built with Google's Agent Development Kit (ADK)"
+base_template = "adk_base"
+agent_directory = "app"
 
 # Generation context
-generated_at = "2025-12-26T02:01:18.050100+00:00"
+generated_at = "2026-01-02T20:47:24.126973+00:00"
 asp_version = "0.29.3"
 
 [tool.agent-starter-pack.create_params]
 # Parameters used during project creation
 deployment_target = "agent_engine"
 session_type = "none"
-cicd_runner = "skip"
+cicd_runner = "google_cloud_build"
 include_data_ingestion = false
 datastore = "none"
 frontend_type = "None"
-
-[tool.uv.workspace]
-members = [
-    "agent_simple",
-]
